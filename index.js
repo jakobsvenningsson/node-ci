@@ -40,7 +40,7 @@ const cloneRepo = (gitURL, repoName, branch) => {
     console.log(`Cloning: ${branch}`)
     return new Promise((resolve, reject) => {
       rimraf.sync(`/tmp/${repoName}`);
-      runChildProcess('git', ['clone', '-b', branch, gitURL])
+      runChildProcess('git', ['clone', '-b', branch, gitURL], '/tmp/')
         .then(() => {
           resolve()
         })
@@ -50,9 +50,12 @@ const cloneRepo = (gitURL, repoName, branch) => {
     })
 }
 
-const buildRepo = () => {
+const buildRepo = (repoName) => {
   return new Promise((resolve, reject) => {
-    runChildProcess('npm', ['test'])
+    runChildProcess('npm', ['install'], `/tmp/${repoName}`)
+      .then(() => {
+        return runChildProcess('npm', ['test'], `/tmp/${repoName}`)
+      })
       .then(() => {
         resolve()
       })
@@ -62,10 +65,10 @@ const buildRepo = () => {
   })
 }
 
-const runChildProcess = (script, args) => {
+const runChildProcess = (script, args, cwd) => {
   return new Promise((resolve, reject) => {
     const { spawn } = require('child_process');
-    const process = spawn(script, args, { cwd: '/tmp/' });
+    const process = spawn(script, args, { cwd: cwd });
 
     process.stdout.on('data', (data) => {
         console.log(`stdout: ${data}`);
@@ -94,7 +97,12 @@ const updateGithubStatus = (state, repoName, sha) => {
     'description': !state ? 'the build failed ' : 'the build successeded'
   }
   const url = `https://api.github.com/repos/jakobsvenningsson/${repoName}/statuses/${sha}/?access_token=${process.argv[2]}`
+  System.out.println(url)
   request.post(url, {form: body})
+    .on('response', function(response) {
+      console.log(response.statusCode) // 200
+      console.log(response.headers['content-type']) // 'image/png'
+    })
 }
 
 app.listen(8080);
