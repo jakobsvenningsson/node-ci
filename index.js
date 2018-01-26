@@ -33,6 +33,7 @@ app.post('/', function (req, res) {
           updateGithubStatus(1, repoName, sha)
         }
       })
+
     res.send('hello world')
 })
 
@@ -93,16 +94,20 @@ const updateGithubStatus = (state, repoName, sha) => {
   const body = {
     'target_url': 'https://example.com',
     'context': 'simple-ci-node',
-    'state': !state ? 'error' : 'success',
-    'description': !state ? 'the build failed ' : 'the build successeded'
+    'state': state ? 'error' : 'success',
+    'description': state ? 'the build failed ' : 'the build successeded'
   }
-  const url = `https://api.github.com/repos/jakobsvenningsson/${repoName}/statuses/${sha}/?access_token=${process.argv[2]}`
-  System.out.println(url)
-  request.post(url, {form: body})
-    .on('response', function(response) {
-      console.log(response.statusCode) // 200
-      console.log(response.headers['content-type']) // 'image/png'
-    })
+  console.log(body)
+  const url = `https://api.github.com/repos/jakobsvenningsson/${repoName}/statuses/${sha}?access_token=${process.argv[2]}`
+  console.log(url)
+  request.post(url, { json: body, headers: { 'User-Agent': 'request' }}, (err, res, body) => {
+    if(err) {
+      console.log(err)
+      return
+    }
+    console.log(res.statusCode)
+    console.log(res.headers['content-type']) // 'image/png'
+  }) 
 }
 
 app.listen(8080);

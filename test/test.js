@@ -2,6 +2,6 @@ var expect = require("chai").expect;
 
 describe("test1", function() {
     it("fails", function() {
-        expect(true).to.equal(false);
+        expect(true).to.equal(true);
     });
 });
